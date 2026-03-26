@@ -1,4 +1,3 @@
-cat > ~/Desktop/sudoku/manifest.json << 'EOF'
 {
   "name": "小高數獨",
   "short_name": "數獨",
@@ -21,4 +20,3 @@ cat > ~/Desktop/sudoku/manifest.json << 'EOF'
     }
   ]
 }
-EOF
