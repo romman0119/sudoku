@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>小高數獨</title>
+  
+  <!-- PWA 相關 -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#4d79ff">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="小高數獨">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
+      color: #333;
+      transition: all 0.3s;
+      padding-bottom: 30px;
+    }
+    body.dark {
+      background-color: #1a1a2e;
+      color: #eee;
+    }
+    h1 {
+      text-align: center;
+    }
+    #timer {
+      text-align: center;
+      font-size: 28px;
+      color: #0066cc;
+      margin: 10px;
+    }
+    body.dark #timer {
+      color: #66b3ff;
+    }
+    #info-bar {
+      text-align: center;
+      margin: 10px;
+    }
+    #hints {
+      font-size: 18px;
+      color: #ff9900;
+    }
+    #best-record {
+      font-size: 16px;
+      color: #4CAF50;
+      margin-top: 5px;
+    }
+    body.dark #best-record {
+      color: #81c784;
+    }
+    #difficulty-container {
+      text-align: center;
+      margin: 15px;
+    }
+    #difficulty-container label {
+      font-size: 18px;
+      margin-right: 10px;
+    }
+    select {
+      padding: 8px 15px;
+      font-size: 16px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #mode-indicator {
+      text-align: center;
+      font-size: 18px;
+      margin: 10px;
+      padding: 8px;
+      border-radius: 5px;
+      background-color: #e3f2fd;
+    }
+    body.dark #mode-indicator {
+      background-color: #1e3a5f;
+    }
+    #mode-indicator.note-mode {
+      background-color: #fff3e0;
+      color: #e65100;
+    }
+    body.dark #mode-indicator.note-mode {
+      background-color: #4a3000;
+      color: #ffb74d;
+    }
+    table {
+      border-collapse: collapse;
+      margin: 20px auto;
+      background-color: white;
+      border: 3px solid #333;
+    }
+    body.dark table {
+      background-color: #16213e;
+      border-color: #eee;
+    }
+    td {
+      width: 50px;
+      height: 50px;
+      border: 1px solid #999;
+      text-align: center;
+      font-size: 22px;
+      font-weight: bold;
+      position: relative;
+      cursor: pointer;
+      vertical-align: middle;
+    }
+    body.dark td {
+      border-color: #555;
+      color: #eee;
+    }
+    td:nth-child(3), td:nth-child(6) {
+      border-right: 3px solid #333;
+    }
+    body.dark td:nth-child(3), body.dark td:nth-child(6) {
+      border-right-color: #eee;
+    }
+    tr:nth-child(3) td, tr:nth-child(6) td {
+      border-bottom: 3px solid #333;
+    }
+    body.dark tr:nth-child(3) td, body.dark tr:nth-child(6) td {
+      border-bottom-color: #eee;
+    }
+    td.highlight {
+      background-color: #fffacd !important;
+    }
+    body.dark td.highlight {
+      background-color: #3d3d00 !important;
+    }
+    td.selected {
+      background-color: #ffeb3b !important;
+    }
+    body.dark td.selected {
+      background-color: #5c5c00 !important;
+    }
+    td.fixed {
+      background-color: #f0f0f0;
+    }
+    body.dark td.fixed {
+      background-color: #2a2a4a;
+    }
+    .user-input {
+      color: #0066cc;
+    }
+    body.dark .user-input {
+      color: #66b3ff;
+    }
+    .correct {
+      color: #4CAF50 !important;
+    }
+    .wrong {
+      color: #ff0000 !important;
+    }
+    .hint-given {
+      color: #ff9900 !important;
+    }
+    .notes-container {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+    .note-num {
+      font-size: 10px;
+      color: #888;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    body.dark .note-num {
+      color: #aaa;
+    }
+    .btn-container {
+      text-align: center;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    button {
+      padding: 10px 18px;
+      font-size: 16px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    button:hover {
+      opacity: 0.9;
+    }
+    button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+    #darkBtn {
+      background-color: #555;
+    }
+    #hintBtn {
+      background-color: #ff9900;
+    }
+    #newBtn {
+      background-color: #2196F3;
+    }
+    #noteBtn {
+      background-color: #9c27b0;
+    }
+    #noteBtn.active {
+      background-color: #e91e63;
+    }
+    #undoBtn {
+      background-color: #607d8b;
+    }
+    #saveBtn {
+      background-color: #00bcd4;
+    }
+    #loadBtn {
+      background-color: #009688;
+    }
+    #soundBtn {
+      background-color: #795548;
+    }
+    #numpad {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      max-width: 320px;
+      margin: 15px auto;
+      gap: 5px;
+    }
+    .num-btn {
+      width: 50px;
+      height: 50px;
+      font-size: 22px;
+      background-color: #e0e0e0;
+      color: #333;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    body.dark .num-btn {
+      background-color: #3a3a5a;
+      color: #eee;
+    }
+    .num-btn:hover {
+      background-color: #bdbdbd;
+    }
+    body.dark .num-btn:hover {
+      background-color: #4a4a6a;
+    }
+    .num-btn.clear-btn {
+      background-color: #ff5722;
+      color: white;
+    }
+    #result {
+      text-align: center;
+      font-size: 20px;
+      margin-top: 20px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎮 小高數獨</h1>
+  <div id="timer">⏱️ 00:00</div>
+  <div id="info-bar">
+    <div id="hints">💡 剩餘提示：3</div>
+    <div id="best-record">🏅 最佳紀錄：--:--</div>
+  </div>
+  
+  <div id="difficulty-container">
+    <label>難度：</label>
+    <select id="difficulty" onchange="newGame()">
+      <option value="easy">😊 簡單</option>
+      <option value="medium" selected>😐 中等</option>
+      <option value="hard">😈 困難</option>
+    </select>
+  </div>
+
+  <div id="mode-indicator">✏️ 輸入模式：填數字</div>
+  
+  <table id="board"></table>
+
+  <div id="numpad">
+    <button class="num-btn" onclick="inputNumber(1)">1</button>
+    <button class="num-btn" onclick="inputNumber(2)">2</button>
+    <button class="num-btn" onclick="inputNumber(3)">3</button>
+    <button class="num-btn" onclick="inputNumber(4)">4</button>
+    <button class="num-btn" onclick="inputNumber(5)">5</button>
+    <button class="num-btn" onclick="inputNumber(6)">6</button>
+    <button class="num-btn" onclick="inputNumber(7)">7</button>
+    <button class="num-btn" onclick="inputNumber(8)">8</button>
+    <button class="num-btn" onclick="inputNumber(9)">9</button>
+    <button class="num-btn clear-btn" onclick="inputNumber(0)">✕</button>
+  </div>
+  
+  <div class="btn-container">
+    <button id="noteBtn" onclick="toggleNoteMode()">📝 筆記模式</button>
+    <button id="undoBtn" onclick="undo()">↩️ 撤銷</button>
+    <button id="hintBtn" onclick="giveHint()">💡 提示</button>
+    <br>
+    <button onclick="checkAnswer()">✔️ 檢查答案</button>
+    <button id="newBtn" onclick="newGame()">🆕 新題目</button>
+    <br>
+    <button id="saveBtn" onclick="saveGame()">💾 存檔</button>
+    <button id="loadBtn" onclick="loadGame()">📂 讀檔</button>
+    <button id="soundBtn" onclick="toggleSound()">🔊 音效</button>
+    <button id="darkBtn" onclick="toggleDark()">🌙 深色</button>
+  </div>
+  <div id="result"></div>
+
+<script>
+    // ==================== PWA 註冊 ====================
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js')
+          .then(reg => console.log('SW 註冊成功'))
+          .catch(err => console.log('SW 註冊失敗', err));
+      });
+    }
+
+    // ==================== 音效系統 ====================
+    const AudioManager = {
+      enabled: true,
+      audioContext: null,
+      
+      init() {
+        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const saved = localStorage.getItem('sudoku-sound');
+        this.enabled = saved !== 'false';
+        this.updateButton();
+      },
+      
+      playTone(frequency, duration, type = 'sine', volume = 0.3) {
+        if (!this.enabled || !this.audioContext) return;
+        
+        const oscillator = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+        
+        oscillator.frequency.value = frequency;
+        oscillator.type = type;
+        
+        gainNode.gain.setValueAtTime(volume, this.audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration);
+        
+        oscillator.start(this.audioContext.currentTime);
+        oscillator.stop(this.audioContext.currentTime + duration);
+      },
+      
+      playInput() {
+        this.playTone(600, 0.1, 'sine', 0.2);
+      },
+      
+      playClear() {
+        this.playTone(300, 0.1, 'sine', 0.15);
+      },
+      
+      playError() {
+        this.playTone(200, 0.15, 'square', 0.2);
+        setTimeout(() => this.playTone(150, 0.15, 'square', 0.2), 100);
+      },
+      
+      playCorrect() {
+        this.playTone(523, 0.1, 'sine', 0.2);
+        setTimeout(() => this.playTone(659, 0.1, 'sine', 0.2), 80);
+      },
+      
+      playNote() {
+        this.playTone(800, 0.05, 'sine', 0.1);
+      },
+      
+      playUndo() {
+        this.playTone(400, 0.08, 'triangle', 0.15);
+      },
+      
+      playVictory() {
+        const melody = [
+          { freq: 523, delay: 0 },
+          { freq: 587, delay: 100 },
+          { freq: 659, delay: 200 },
+          { freq: 698, delay: 300 },
+          { freq: 784, delay: 400 },
+          { freq: 880, delay: 550 },
+          { freq: 988, delay: 700 },
+          { freq: 1047, delay: 850 },
+        ];
+        melody.forEach(note => {
+          setTimeout(() => this.playTone(note.freq, 0.3, 'sine', 0.25), note.delay);
+        });
+      },
+      
+      playHint() {
+        this.playTone(880, 0.1, 'sine', 0.2);
+        setTimeout(() => this.playTone(1100, 0.15, 'sine', 0.2), 100);
+      },
+      
+      toggle() {
+        this.enabled = !this.enabled;
+        localStorage.setItem('sudoku-sound', this.enabled);
+        this.updateButton();
+        if (this.enabled) this.playInput();
+      },
+      
+      updateButton() {
+        const btn = document.getElementById('soundBtn');
+        if (btn) {
+          btn.textContent = this.enabled ? '🔊 音效' : '🔇 靜音';
+        }
+      }
+    };
+
+    // 初始化音效（需要用戶互動）
+    document.addEventListener('click', () => {
+      if (!AudioManager.audioContext) {
+        AudioManager.init();
+      }
+    }, { once: true });
+
+    function toggleSound() {
+      if (!AudioManager.audioContext) {
+        AudioManager.init();
+      }
+      AudioManager.toggle();
+    }
+
+    // ==================== 遊戲狀態 ====================
+    let currentPuzzle = [];
+    let currentSolution = [];
+    let userInputs = [];
+    let userNotes = [];
+    let selectedCell = null;
+    let isDark = false;
+    let isNoteMode = false;
+    let seconds = 0;
+    let timerInterval = null;
+    let hintsLeft = 3;
+    let history = [];
+
+    // ===== 隨機數獨生成器 =====
+    function shuffleArray(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function isValidPlacement(board, row, col, num) {
+      for (let j = 0; j < 9; j++) {
+        if (board[row][j] === num) return false;
+      }
+      for (let i = 0; i < 9; i++) {
+        if (board[i][col] === num) return false;
+      }
+      const boxRow = Math.floor(row / 3) * 3;
+      const boxCol = Math.floor(col / 3) * 3;
+      for (let i = boxRow; i < boxRow + 3; i++) {
+        for (let j = boxCol; j < boxCol + 3; j++) {
+          if (board[i][j] === num) return false;
+        }
+      }
+      return true;
+    }
+
+    function solveSudoku(board) {
+      for (let i = 0; i < 9; i++) {
+        for (let j = 0; j < 9; j++) {
+          if (board[i][j] === 0) {
+            const nums = shuffleArray([1,2,3,4,5,6,7,8,9]);
+            for (const num of nums) {
+              if (isValidPlacement(board, i, j, num)) {
+                board[i][j] = num;
+                if (solveSudoku(board)) return true;
+                board[i][j] = 0;
+              }
+            }
+            return false;
+          }
+        }
+      }
+      return true;
+    }
+
+    function generateRandomSudoku() {
+      const board = Array(9).fill(null).map(() => Array(9).fill(0));
+      solveSudoku(board);
+      return board;
+    }
+
+    function generatePuzzle(difficulty) {
+      currentSolution = generateRandomSudoku();
+      currentPuzzle = currentSolution.map(row => [...row]);
+      
+      let holes;
+      if (difficulty === 'easy') holes = 30;
+      else if (difficulty === 'medium') holes = 45;
+      else holes = 55;
+      
+      let removed = 0;
+      while (removed < holes) {
+        const i = Math.floor(Math.random() * 9);
+        const j = Math.floor(Math.random() * 9);
+        if (currentPuzzle[i][j] !== 0) {
+          currentPuzzle[i][j] = 0;
+          removed++;
+        }
+      }
+
+      userInputs = Array(9).fill(null).map(() => Array(9).fill(0));
+      userNotes = Array(9).fill(null).map(() => Array(9).fill(null).map(() => []));
+      history = [];
+    }
+
+    // ===== 計時器 =====
+    function startTimer() {
+      timerInterval = setInterval(() => {
+        seconds++;
+        updateTimerDisplay();
+      }, 1000);
+    }
+
+    function stopTimer() {
+      clearInterval(timerInterval);
+    }
+
+    function resetTimer() {
+      stopTimer();
+      seconds = 0;
+      updateTimerDisplay();
+      startTimer();
+    }
+
+    function updateTimerDisplay() {
+      const min = String(Math.floor(seconds / 60)).padStart(2, '0');
+      const sec = String(seconds % 60).padStart(2, '0');
+      document.getElementById('timer').textContent = `⏱️ ${min}:${sec}`;
+    }
+
+    // ===== 最佳紀錄 =====
+    function getBestRecord(difficulty) {
+      return localStorage.getItem(`sudoku-best-${difficulty}`);
+    }
+
+    function setBestRecord(difficulty, time) {
+      const current = getBestRecord(difficulty);
+      if (!current || time < parseInt(current)) {
+        localStorage.setItem(`sudoku-best-${difficulty}`, time);
+        return true;
+      }
+      return false;
+    }
+
+    function displayBestRecord() {
+      const difficulty = document.getElementById('difficulty').value;
+      const best = getBestRecord(difficulty);
+      if (best) {
+        const min = String(Math.floor(best / 60)).padStart(2, '0');
+        const sec = String(best % 60).padStart(2, '0');
+        document.getElementById('best-record').textContent = `🏅 最佳紀錄：${min}:${sec}`;
+      } else {
+        document.getElementById('best-record').textContent = `🏅 最佳紀錄：--:--`;
+      }
+    }
+
+    // ===== 深色模式 =====
+    function toggleDark() {
+      isDark = !isDark;
+      document.body.classList.toggle('dark');
+      document.getElementById('darkBtn').textContent = isDark ? '☀️ 淺色' : '🌙 深色';
+      localStorage.setItem('sudoku-dark', isDark);
+    }
+
+    // ===== 筆記模式 =====
+    function toggleNoteMode() {
+      isNoteMode = !isNoteMode;
+      const btn = document.getElementById('noteBtn');
+      const indicator = document.getElementById('mode-indicator');
+      
+      if (isNoteMode) {
+        btn.classList.add('active');
+        btn.textContent = '📝 筆記中';
+        indicator.textContent = '📝 輸入模式：筆記';
+        indicator.classList.add('note-mode');
+      } else {
+        btn.classList.remove('active');
+        btn.textContent = '📝 筆記模式';
+        indicator.textContent = '✏️ 輸入模式：填數字';
+        indicator.classList.remove('note-mode');
+      }
+    }
+
+    // ===== 高亮 =====
+    function clearHighlight() {
+      const cells = document.querySelectorAll('td');
+      cells.forEach(cell => {
+        cell.classList.remove('highlight', 'selected');
+      });
+    }
+
+    function highlightRelated(row, col) {
+      clearHighlight();
+      
+      const table = document.getElementById('board');
+      const boxRow = Math.floor(row / 3) * 3;
+      const boxCol = Math.floor(col / 3) * 3;
+      
+      for (let i = 0; i < 9; i++) {
+        for (let j = 0; j < 9; j++) {
+          const cell = table.rows[i].cells[j];
+          const sameRow = (i === row);
+          const sameCol = (j === col);
+          const sameBox = (i >= boxRow && i < boxRow + 3 && j >= boxCol && j < boxCol + 3);
+          
+          if (sameRow || sameCol || sameBox) {
+            cell.classList.add('highlight');
+          }
+          if (i === row && j === col) {
+            cell.classList.add('selected');
+          }
+        }
+      }
+    }
+
+    // ===== 選取格子 =====
+    function selectCell(row, col) {
+      if (currentPuzzle[row][col] !== 0) {
+        highlightRelated(row, col);
+        selectedCell = null;
+        return;
+      }
+      
+      selectedCell = {row, col};
+      highlightRelated(row, col);
+    }
+
+    // ===== 撤銷功能 =====
+    function saveHistory() {
+      history.push({
+        userInputs: userInputs.map(row => [...row]),
+        userNotes: userNotes.map(row => row.map(notes => [...notes]))
+      });
+      if (history.length > 50) {
+        history.shift();
+      }
+    }
+
+    function undo() {
+      if (history.length === 0) {
+        document.getElementById('result').textContent = '⚠️ 沒有可撤銷的步驟';
+        document.getElementById('result').style.color = '#ff9900';
+        return;
+      }
+      
+      const prev = history.pop();
+      userInputs = prev.userInputs;
+      userNotes = prev.userNotes;
+      renderBoard();
+      
+      AudioManager.playUndo(); // 🔊 撤銷音效
+      
+      document.getElementById('result').textContent = '↩️ 已撤銷';
+      document.getElementById('result').style.color = '#607d8b';
+    }
+
+    // ===== 輸入數字 =====
+    function inputNumber(num) {
+      if (!selectedCell) {
+        document.getElementById('result').textContent = '⚠️ 請先點選一個格子';
+        document.getElementById('result').style.color = '#ff9900';
+        return;
+      }
+      
+      const {row, col} = selectedCell;
+      
+      saveHistory();
+      
+      if (isNoteMode) {
+        // 筆記模式
+        if (num === 0) {
+          userNotes[row][col] = [];
+          AudioManager.playClear(); // 🔊 清除音效
+        } else {
+          const idx = userNotes[row][col].indexOf(num);
+          if (idx > -1) {
+            userNotes[row][col].splice(idx, 1);
+          } else {
+            userNotes[row][col].push(num);
+            userNotes[row][col].sort();
+          }
+          AudioManager.playNote(); // 🔊 筆記音效
+        }
+        userInputs[row][col] = 0;
+      } else {
+        // 填數字模式
+        if (num === 0) {
+          userInputs[row][col] = 0;
+          AudioManager.playClear(); // 🔊 清除音效
+        } else {
+          userInputs[row][col] = num;
+          // 檢查對錯播放音效
+          if (num === currentSolution[row][col]) {
+            AudioManager.playCorrect(); // 🔊 正確音效
+          } else {
+            AudioManager.playError(); // 🔊 錯誤音效
+          }
+        }
+        userNotes[row][col] = [];
+      }
+      
+      renderBoard();
+      
+      if (selectedCell) {
+        const cell = document.getElementById('board').rows[row].cells[col];
+        cell.classList.add('selected');
+      }
+      
+      checkAutoComplete();
+    }
+
+    // ===== 渲染棋盤 =====
+    function renderBoard() {
+      const table = document.getElementById('board');
+      table.innerHTML = '';
+
+      for (let i = 0; i < 9; i++) {
+        const row = table.insertRow();
+        for (let j = 0; j < 9; j++) {
+          const cell = row.insertCell();
+          cell.dataset.row = i;
+          cell.dataset.col = j;
+          
+          if (currentPuzzle[i][j] !== 0) {
+            cell.textContent = currentPuzzle[i][j];
+            cell.classList.add('fixed');
+            cell.onclick = () => selectCell(i, j);
+          } else if (userInputs[i][j] !== 0) {
+            const value = userInputs[i][j];
+            cell.textContent = value;
+            cell.classList.add('user-input');
+            
+            if (value === currentSolution[i][j]) {
+              cell.classList.add('correct');
+            } else {
+              cell.classList.add('wrong');
+            }
+            
+            cell.onclick = () => selectCell(i, j);
+          } else if (userNotes[i][j].length > 0) {
+            const notesDiv = document.createElement('div');
+            notesDiv.className = 'notes-container';
+            for (let n = 1; n <= 9; n++) {
+              const noteCell = document.createElement('div');
+              noteCell.className = 'note-num';
+              if (userNotes[i][j].includes(n)) {
+                noteCell.textContent = n;
+              }
+              notesDiv.appendChild(noteCell);
+            }
+            cell.appendChild(notesDiv);
+            cell.onclick = () => selectCell(i, j);
+          } else {
+            cell.onclick = () => selectCell(i, j);
+          }
+        }
+      }
+    }
+
+    function buildBoard() {
+      renderBoard();
+      
+      document.addEventListener('click', function(e) {
+        if (!e.target.closest('#board') && !e.target.closest('#numpad') && !e.target.closest('button')) {
+          clearHighlight();
+          selectedCell = null;
+        }
+      });
+    }
+
+    // ===== 提示 =====
+    function giveHint() {
+      if (hintsLeft <= 0) {
+        document.getElementById('result').textContent = '❌ 沒有提示了！';
+        document.getElementById('result').style.color = '#cc0000';
+        return;
+      }
+
+      let emptyCells = [];
+      for (let i = 0; i < 9; i++) {
+        for (let j = 0; j < 9; j++) {
+          if (currentPuzzle[i][j] === 0 && userInputs[i][j] !== currentSolution[i][j]) {
+            emptyCells.push({i, j});
+          }
+        }
+      }
+
+      if (emptyCells.length === 0) {
+        document.getElementById('result').textContent = '✅ 已經填完了！';
+        document.getElementById('result').style.color = '#4CAF50';
+        return;
+      }
+
+      saveHistory();
+      
+      const random = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+      userInputs[random.i][random.j] = currentSolution[random.i][random.j];
+      userNotes[random.i][random.j] = [];
+      
+      hintsLeft--;
+      document.getElementById('hints').textContent = `💡 剩餘提示：${hintsLeft}`;
+      document.getElementById('result').textContent = `💡 已填入一格提示！`;
+      document.getElementById('result').style.color = '#ff9900';
+      
+      AudioManager.playHint(); // 🔊 提示音效
+      
+      renderBoard();
+      checkAutoComplete();
+    }
+
+    // ===== 自動完成檢測 =====
+    function checkAutoComplete() {
+      for (let i = 0; i < 9; i++) {
+        for (let j = 0; j < 9; j++) {
+          if (currentPuzzle[i][j] === 0) {
+            if (userInputs[i][j] !== currentSolution[i][j]) {
+              return;
+            }
+          }
+        }
+      }
+      
+      stopTimer();
+      
+      AudioManager.playVictory(); // 🔊 勝利音效
+      
+      const difficulty = document.getElementById('difficulty').value;
+      const isNewRecord = setBestRecord(difficulty, seconds);
+      displayBestRecord();
+      
+      let msg = `🎉 恭喜完成！用時 ${document.getElementById('timer').textContent.slice(3)}`;
+      if (isNewRecord) {
+        msg += ' 🏆 新紀錄！';
+      }
+      document.getElementById('result').textContent = msg;
+      document.getElementById('result').style.color = '#4CAF50';
+    }
+
+    // ===== 檢查答案 =====
+    function checkAnswer() {
+      let correct = true;
+      let empty = false;
+
+      for (let i = 0; i < 9; i++) {
+        for (let j = 0; j < 9; j++) {
+          if (currentPuzzle[i][j] === 0) {
+            if (userInputs[i][j] === 0) {
+              empty = true;
+            } else if (userInputs[i][j] !== currentSolution[i][j]) {
+              correct = false;
+            }
+          }
+        }
+      }
+
+      const result = document.getElementById('result');
+      if (empty) {
+        result.textContent = '⚠️ 還有空格沒填完喔！';
+        result.style.color = '#ff9900';
+      } else if (correct) {
+        stopTimer();
+        AudioManager.playVictory(); // 🔊 勝利音效
+        
+        const difficulty = document.getElementById('difficulty').value;
+        const isNewRecord = setBestRecord(difficulty, seconds);
+        displayBestRecord();
+        
+        let msg = `🎉 恭喜完成！用時 ${document.getElementById('timer').textContent.slice(3)}`;
+        if (isNewRecord) {
+          msg += ' 🏆 新紀錄！';
+        }
+        result.textContent = msg;
+        result.style.color = '#4CAF50';
+      } else {
+        result.textContent = '❌ 有些格子不對，紅色的要修改';
+        result.style.color = '#cc0000';
+      }
+    }
+
+    // ===== 存檔讀檔 =====
+    function saveGame() {
+      const gameState = {
+        currentPuzzle,
+        currentSolution,
+        userInputs,
+        userNotes,
+        seconds,
+        hintsLeft,
+        difficulty: document.getElementById('difficulty').value
+      };
+      localStorage.setItem('sudoku-save', JSON.stringify(gameState));
+      document.getElementById('result').textContent = '💾 已存檔！';
+      document.getElementById('result').style.color = '#00bcd4';
+    }
+
+    function loadGame() {
+      const saved = localStorage.getItem('sudoku-save');
+      if (!saved) {
+        document.getElementById('result').textContent = '⚠️ 沒有找到存檔';
+        document.getElementById('result').style.color = '#ff9900';
+        return;
+      }
+      
+      const gameState = JSON.parse(saved);
+      currentPuzzle = gameState.currentPuzzle;
+      currentSolution = gameState.currentSolution;
+      userInputs = gameState.userInputs;
+      userNotes = gameState.userNotes;
+      seconds = gameState.seconds;
+      hintsLeft = gameState.hintsLeft;
+      history = [];
+      
+      document.getElementById('difficulty').value = gameState.difficulty;
+      document.getElementById('hints').textContent = `💡 剩餘提示：${hintsLeft}`;
+      displayBestRecord();
+      
+      stopTimer();
+      updateTimerDisplay();
+      startTimer();
+      
+      renderBoard();
+      document.getElementById('result').textContent = '📂 已讀取存檔！';
+      document.getElementById('result').style.color = '#009688';
+    }
+
+    // ===== 新遊戲 =====
+    function newGame() {
+      const difficulty = document.getElementById('difficulty').value;
+      generatePuzzle(difficulty);
+      
+      hintsLeft = 3;
+      document.getElementById('hints').textContent = `💡 剩餘提示：${hintsLeft}`;
+      document.getElementById('result').textContent = '';
+      selectedCell = null;
+      isNoteMode = false;
+      document.getElementById('noteBtn').classList.remove('active');
+      document.getElementById('noteBtn').textContent = '📝 筆記模式';
+      document.getElementById('mode-indicator').textContent = '✏️ 輸入模式：填數字';
+      document.getElementById('mode-indicator').classList.remove('note-mode');
+      
+      displayBestRecord();
+      resetTimer();
+      buildBoard();
+    }
+
+    // ===== 鍵盤支援 =====
+    document.addEventListener('keydown', function(e) {
+      if (e.key >= '1' && e.key <= '9') {
+        inputNumber(parseInt(e.key));
+      } else if (e.key === 'Backspace' || e.key === 'Delete' || e.key === '0') {
+        inputNumber(0);
+      } else if (e.key === 'n' || e.key === 'N') {
+        toggleNoteMode();
+      } else if (e.key === 'z' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        undo();
+      }
+    });
+
+    // ===== 初始化 =====
+    function init() {
+      if (localStorage.getItem('sudoku-dark') === 'true') {
+        toggleDark();
+      }
+      newGame();
+    }
+
+    init();
+  </script>
+</body>
+</html>
