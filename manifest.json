@@ -1,23 +1,24 @@
+cat > ~/Desktop/sudoku/manifest.json << 'EOF'
 {
   "name": "小高數獨",
   "short_name": "數獨",
-  "description": "免費線上數獨遊戲",
-  "start_url": "/",
+  "start_url": "/sudoku/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#4d79ff",
   "icons": [
     {
-      "src": "icons/icon-192.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "icons/icon-512.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "any"
     }
   ]
 }
+EOF
